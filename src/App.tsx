@@ -1,15 +1,23 @@
 import Latex from "react-latex-next";
 import { useState } from "react";
-import { MathOp, getEquation } from "./unsolver";
-import "./App.css";
-import "../node_modules/katex/dist/katex.css";
+import { getEquation } from "./unsolver";
+import InfoTab from "./InfoTab"
+import React from "react";
+import { MathOp } from "./unsolver";
+import "./App.css"; 
+import "../node_modules/katex/dist/katex.css"
 
-const ops = [MathOp.Add, MathOp.Sub, MathOp.Mul, MathOp.Div];
 
-const App = () => {
-  const [answer, setAnswer] = useState(42);
-  const [depth, setDepth] = useState(3);
-  const [equation, setEquation] = useState(getEquation(answer, depth, ops));
+function App() {
+  const [ops, setOps] = React.useState(["+", "-", "*"]);
+  
+  function updateOpsArray(op: MathOp): void {
+    const newArray = ops.filter((x) => x !== op)
+    if (newArray.length === ops.length) ops.concat(op)
+    setOps(newArray)
+  }
+  
+  const [equation, setEquation] = useState(" ");
 
   const newEquation = () => {
     setEquation(getEquation(answer, depth, ops));
@@ -17,6 +25,7 @@ const App = () => {
 
   return (
     <>
+        <InfoTab handleChange={updateOpsArray}></InfoTab>
       <h1>
         <Latex>{"$" + equation + "$"}</Latex>
       </h1>
