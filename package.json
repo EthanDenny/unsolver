@@ -1,0 +1,29 @@
+{
+  "name": "unsolver",
+  "version": "1.0.0",
+  "description": "Input a value and needlessly complicate it",
+  "main": "index.js",
+  "scripts": {
+    "start": "npm run open",
+    "open": "http-server --cors"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EthanDenny/unsolver.git"
+  },
+  "keywords": [
+    "gaming"
+  ],
+  "author": "rowan butler & ethan denny",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/EthanDenny/unsolver/issues"
+  },
+  "homepage": "https://github.com/EthanDenny/unsolver#readme",
+  "dependencies": {
+    "http-server": "14.1.1",
+    "mathjax": "^3.2.2",
+    "react": "^19.0.0",
+    "tailwindcss": "^3.4.17"
+  }
+}
