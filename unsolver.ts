@@ -1,4 +1,4 @@
-const ops = ["+", "-"];
+const ops = ["+", "-", "*"];
 
 const random = (a: number, b: number) => {
   return a + Math.floor(Math.random() * (b - a + 1));
@@ -45,25 +45,52 @@ const expandNode = (node: MathNode) => {
 };
 
 const evaluateNode = (node: MathNode, value: number) => {
-  if (node.op == "+") {
-    if (value > 1) {
-      const left = random(1, value - 1);
-      const right = value - left;
+  switch (node.op) {
+    case "+": {
+      if (value > 1) {
+        const left = random(1, value - 1);
+        const right = value - left;
+
+        evaluateNode(node.left!, left);
+        evaluateNode(node.right!, right);
+      } else {
+        node.op = undefined;
+        node.value = 1;
+      }
+
+      break;
+    }
+    case "-": {
+      const left = random(value + 1, value * 2);
+      const right = left - value;
 
       evaluateNode(node.left!, left);
       evaluateNode(node.right!, right);
-    } else {
-      node.op = undefined;
-      node.value = 1;
-    }
-  } else if (node.op == "-") {
-    const left = random(value + 1, value * 2);
-    const right = left - value;
 
-    evaluateNode(node.left!, left);
-    evaluateNode(node.right!, right);
-  } else {
-    node.value = value;
+      break;
+    }
+    case "*": {
+      const left = value;
+      const right = 1;
+
+      evaluateNode(node.left!, left);
+      evaluateNode(node.right!, right);
+
+      break;
+    }
+    default: {
+      node.value = value;
+      break;
+    }
+  }
+};
+
+const renderOp = (op: string) => {
+  switch (op) {
+    case "*":
+      return "\\times";
+    default:
+      return op;
   }
 };
 
@@ -71,10 +98,9 @@ const formatNode = (node: MathNode, depth: number = 1) => {
   if (node.op === undefined) {
     return node.value;
   } else {
-    return `(${formatNode(node.left!, depth + 1)} ${node.op} ${formatNode(
-      node.right!,
-      depth + 1
-    )})`;
+    return `(${formatNode(node.left!, depth + 1)} ${renderOp(
+      node.op
+    )} ${formatNode(node.right!, depth + 1)})`;
   }
 };
 
