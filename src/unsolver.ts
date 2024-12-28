@@ -7,8 +7,15 @@ const choose = (choices: any[]) => {
   return choices[index];
 };
 
+enum MathOp {
+  Add = "+",
+  Sub = "-",
+  Mul = "*",
+  Const = "",
+}
+
 type MathNode = {
-  op?: string;
+  op: MathOp;
   value?: number;
   left?: MathNode;
   right?: MathNode;
@@ -16,7 +23,7 @@ type MathNode = {
 };
 
 const newNode = (depth: number = 1) => {
-  return { depth };
+  return { depth, op: MathOp.Const };
 };
 
 const expandNode = (node: MathNode, max_depth: number, ops: string[]) => {
@@ -37,58 +44,55 @@ const expandNode = (node: MathNode, max_depth: number, ops: string[]) => {
   }
 };
 
-const evaluateNode = (node: MathNode, value: number) => {
-  switch (node.op) {
-    case "+": {
-      if (value > 1) {
-        const left = random(1, value - 1);
-        const right = value - left;
+let evals = new Map<MathOp, (node: MathNode, value: number) => void>();
 
-        evaluateNode(node.left!, left);
-        evaluateNode(node.right!, right);
-      } else {
-        node.op = undefined;
-        node.value = 1;
-      }
+evals.set(MathOp.Add, (node: MathNode, value: number) => {
+  if (value > 1) {
+    const left = random(1, value - 1);
+    const right = value - left;
 
-      break;
-    }
-    case "-": {
-      const left = random(value + 1, value * 2);
-      const right = left - value;
-
-      evaluateNode(node.left!, left);
-      evaluateNode(node.right!, right);
-
-      break;
-    }
-    case "*": {
-      const left = value;
-      const right = 1;
-
-      evaluateNode(node.left!, left);
-      evaluateNode(node.right!, right);
-
-      break;
-    }
-    default: {
-      node.value = value;
-      break;
-    }
+    evaluateNode(node.left!, left);
+    evaluateNode(node.right!, right);
+  } else {
+    node.op = MathOp.Const;
+    node.value = 1;
   }
+});
+
+evals.set(MathOp.Sub, (node: MathNode, value: number) => {
+  const left = random(value + 1, value * 2);
+  const right = left - value;
+
+  evaluateNode(node.left!, left);
+  evaluateNode(node.right!, right);
+});
+
+evals.set(MathOp.Mul, (node: MathNode, value: number) => {
+  const left = value;
+  const right = 1;
+
+  evaluateNode(node.left!, left);
+  evaluateNode(node.right!, right);
+});
+
+evals.set(MathOp.Const, (node: MathNode, value: number) => {
+  node.value = value;
+});
+
+const evaluateNode = (node: MathNode, value: number) => {
+  evals.get(node.op!)!(node, value);
 };
 
-const renderOp = (op: string) => {
-  switch (op) {
-    case "*":
-      return "\\times";
-    default:
-      return op;
+const renderOp = (op: MathOp) => {
+  if (op == MathOp.Mul) {
+    return "\\times";
+  } else {
+    return op;
   }
 };
 
 const formatNode = (node: MathNode, depth: number = 1): string => {
-  if (node.op === undefined) {
+  if (node.op == MathOp.Const) {
     return `${node.value}`;
   } else {
     return `(${formatNode(node.left!, depth + 1)} ${renderOp(
