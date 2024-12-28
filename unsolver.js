@@ -1,23 +1,15 @@
 const ops = ["+", "-", "*"];
 
-const random = (a: number, b: number) => {
+const random = (a, b) => {
   return a + Math.floor(Math.random() * (b - a + 1));
 };
 
-const choose = (choices: any[]) => {
+const choose = (choices) => {
   const index = random(0, choices.length - 1);
   return choices[index];
 };
 
-type MathNode = {
-  op?: string;
-  value?: number;
-  left?: MathNode;
-  right?: MathNode;
-  depth: number;
-};
-
-const newNode = (depth: number = 1) => {
+const newNode = (depth) => {
   return { depth };
 };
 
@@ -26,7 +18,7 @@ let depth = 3;
 
 let root = newNode();
 
-const expandNode = (node: MathNode) => {
+const expandNode = (node) => {
   if (node.depth == depth) {
     return;
   }
@@ -44,15 +36,15 @@ const expandNode = (node: MathNode) => {
   }
 };
 
-const evaluateNode = (node: MathNode, value: number) => {
+const evaluateNode = (node, value) => {
   switch (node.op) {
     case "+": {
       if (value > 1) {
         const left = random(1, value - 1);
         const right = value - left;
 
-        evaluateNode(node.left!, left);
-        evaluateNode(node.right!, right);
+        evaluateNode(node.left, left);
+        evaluateNode(node.right, right);
       } else {
         node.op = undefined;
         node.value = 1;
@@ -64,8 +56,8 @@ const evaluateNode = (node: MathNode, value: number) => {
       const left = random(value + 1, value * 2);
       const right = left - value;
 
-      evaluateNode(node.left!, left);
-      evaluateNode(node.right!, right);
+      evaluateNode(node.left, left);
+      evaluateNode(node.right, right);
 
       break;
     }
@@ -73,8 +65,8 @@ const evaluateNode = (node: MathNode, value: number) => {
       const left = value;
       const right = 1;
 
-      evaluateNode(node.left!, left);
-      evaluateNode(node.right!, right);
+      evaluateNode(node.left, left);
+      evaluateNode(node.right, right);
 
       break;
     }
@@ -85,7 +77,7 @@ const evaluateNode = (node: MathNode, value: number) => {
   }
 };
 
-const renderOp = (op: string) => {
+const renderOp = (op) => {
   switch (op) {
     case "*":
       return "\\times";
@@ -94,13 +86,13 @@ const renderOp = (op: string) => {
   }
 };
 
-const formatNode = (node: MathNode, depth: number = 1) => {
+const formatNode = (node, depth) => {
   if (node.op === undefined) {
     return node.value;
   } else {
-    return `(${formatNode(node.left!, depth + 1)} ${renderOp(
+    return `(${formatNode(node.left, depth + 1)} ${renderOp(
       node.op
-    )} ${formatNode(node.right!, depth + 1)})`;
+    )} ${formatNode(node.right, depth + 1)})`;
   }
 };
 
