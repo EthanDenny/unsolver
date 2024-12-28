@@ -8,10 +8,13 @@ const choose = (choices: any[]) => {
 };
 
 export enum MathOp {
+  Const = "",
   Add = "+",
   Sub = "-",
   Mul = "\\times",
-  Const = "",
+  Div = "frac",
+  Sin = "sin",
+  Cos = "cos",
 }
 
 type MathNode = {
@@ -35,9 +38,15 @@ const expandNode = (node: MathNode, max_depth: number, ops: MathOp[]) => {
   let child_count = 0;
 
   switch (node.op) {
+    case MathOp.Sin:
+    case MathOp.Cos: {
+      child_count = 1;
+      break;
+    }
     case MathOp.Add:
     case MathOp.Sub:
-    case MathOp.Mul: {
+    case MathOp.Mul:
+    case MathOp.Div: {
       child_count = 2;
       break;
     }
@@ -82,6 +91,25 @@ evals.set(MathOp.Mul, (node: MathNode, value: number) => {
   evaluateNode(node.children[1], right);
 });
 
+evals.set(MathOp.Div, (node: MathNode, value: number) => {
+  const left = value;
+  const right = 1;
+
+  evaluateNode(node.children[0], left);
+  evaluateNode(node.children[1], right);
+});
+
+evals.set(MathOp.Sin, (node: MathNode, value: number) => {
+  console.log(value);
+  const inner = Math.asin(value);
+  evaluateNode(node.children[0], inner);
+});
+
+evals.set(MathOp.Cos, (node: MathNode, value: number) => {
+  const inner = Math.acos(value);
+  evaluateNode(node.children[0], inner);
+});
+
 evals.set(MathOp.Const, (node: MathNode, value: number) => {
   node.value = value;
 });
@@ -96,10 +124,21 @@ const formatNode = (node: MathNode, depth: number = 1): string => {
       return `${node.value}`;
     case MathOp.Add:
     case MathOp.Sub:
-    case MathOp.Mul:
-      return `(${formatNode(node.children[0], depth + 1)} ${
-        node.op
-      } ${formatNode(node.children[1], depth + 1)})`;
+    case MathOp.Mul: {
+      const left = formatNode(node.children[0], depth + 1);
+      const right = formatNode(node.children[1], depth + 1);
+      return `(${left} ${node.op} ${right})`;
+    }
+    case MathOp.Sin:
+    case MathOp.Cos: {
+      const inner = formatNode(node.children[0], depth + 1);
+      return `\\${node.op}(${inner})`;
+    }
+    case MathOp.Div: {
+      const left = formatNode(node.children[0], depth + 1);
+      const right = formatNode(node.children[1], depth + 1);
+      return `\\frac{${left}}{${right}}`;
+    }
   }
 };
 

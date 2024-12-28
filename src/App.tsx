@@ -4,7 +4,7 @@ import { MathOp, getEquation } from "./unsolver";
 import "./App.css";
 import "../node_modules/katex/dist/katex.css";
 
-const ops = [MathOp.Add, MathOp.Sub, MathOp.Mul];
+const ops = [MathOp.Add, MathOp.Sub, MathOp.Mul, MathOp.Div];
 
 const App = () => {
   const [answer, setAnswer] = useState(42);
