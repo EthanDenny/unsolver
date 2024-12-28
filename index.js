@@ -6,7 +6,7 @@ MathJax.init({
     console.log("start svg")
     const svg = MathJax.tex2svg('42', {display: true});
 
-    var newSvg = document.getElementById('myDiv'); 
+    var newSvg = document.getElementById('exported-svg'); 
     newSvg.outerHTML+= svg
     console.log(svg)
 
