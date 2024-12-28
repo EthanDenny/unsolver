@@ -2,6 +2,8 @@ import { useState } from "react";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import { getEquation } from "./unsolver";
+import '../node_modules/katex/dist/katex.css';
+import Latex from "react-latex-next";
 import "./App.css";
 
 const ops = ["+", "-", "*"];
@@ -28,7 +30,9 @@ function App() {
           Edit <code>src/App.tsx</code> and save to test HMR
         </p>
       </div>
-      <p className="read-the-docs">{getEquation(42, 3, ops)}</p>
+      <p className="read-the-docs">
+        {<Latex>{"$" + getEquation(42, 3, ops) + "$"}</Latex>}
+        </p>
     </>
   );
 }
