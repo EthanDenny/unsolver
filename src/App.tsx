@@ -1,10 +1,10 @@
 import Latex from "react-latex-next";
 import { useState } from "react";
-import { getEquation } from "./unsolver";
+import { MathOp, getEquation } from "./unsolver";
 import "./App.css";
 import "../node_modules/katex/dist/katex.css";
 
-const ops = ["+", "-", "*"];
+const ops = [MathOp.Add, MathOp.Sub, MathOp.Mul];
 
 const App = () => {
   const [answer, setAnswer] = useState(42);
