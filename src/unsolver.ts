@@ -17,12 +17,12 @@ export enum MathOp {
   Cos = "cos",
 }
 
-type MathNode = {
+interface MathNode {
   op: MathOp;
   value?: number;
   children: MathNode[];
   depth: number;
-};
+}
 
 const newNode = (depth: number = 1) => {
   return { children: [], depth, op: MathOp.Const };
@@ -119,24 +119,27 @@ const evaluateNode = (node: MathNode, value: number) => {
 };
 
 const formatNode = (node: MathNode, depth: number = 1): string => {
+  const formatChild = (index: number) =>
+    formatNode(node.children[index], depth + 1);
+
   switch (node.op) {
     case MathOp.Const:
       return `${node.value}`;
     case MathOp.Add:
     case MathOp.Sub:
     case MathOp.Mul: {
-      const left = formatNode(node.children[0], depth + 1);
-      const right = formatNode(node.children[1], depth + 1);
+      const left = formatChild(0);
+      const right = formatChild(1);
       return `(${left} ${node.op} ${right})`;
     }
     case MathOp.Sin:
     case MathOp.Cos: {
-      const inner = formatNode(node.children[0], depth + 1);
+      const inner = formatChild(0);
       return `\\${node.op}(${inner})`;
     }
     case MathOp.Div: {
-      const left = formatNode(node.children[0], depth + 1);
-      const right = formatNode(node.children[1], depth + 1);
+      const left = formatChild(0);
+      const right = formatChild(1);
       return `\\frac{${left}}{${right}}`;
     }
   }
