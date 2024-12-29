@@ -5,31 +5,29 @@ import { getEquation, MathOp } from "./unsolver";
 import "./App.css";
 import "../node_modules/katex/dist/katex.css";
 
-interface OpLabel {
-  label: string;
-  op: MathOp;
-}
-
-const opLabels: OpLabel[] = [
-  { label: "Addition", op: MathOp.Add },
-  { label: "Subtraction", op: MathOp.Sub },
-  { label: "Multiplication", op: MathOp.Mul },
-  { label: "Division", op: MathOp.Div },
+const opLabels: [string, MathOp][] = [
+  ["Addition", MathOp.Add],
+  ["Subtraction", MathOp.Sub],
+  ["Multiplication", MathOp.Mul],
+  ["Division", MathOp.Div],
 ];
 
 const useOpToggles = (): [
-  Record<MathOp, boolean>,
-  (op: MathOp, value: boolean) => void
+  (op: MathOp) => boolean,
+  (op: MathOp, value: boolean) => void,
+  () => MathOp[]
 ] => {
   const generateOpMap = () => {
     let map: any = {};
-    opLabels.forEach(({ op }) => {
+    opLabels.forEach(([_, op]) => {
       map[op] = true;
     });
     return map as Record<MathOp, boolean>;
   };
 
   const [ops, setOps] = useState(generateOpMap());
+
+  const getOpToggle = (op: MathOp) => ops[op];
 
   const setOp = (op: MathOp, value: boolean) => {
     setOps({
@@ -38,34 +36,31 @@ const useOpToggles = (): [
     });
   };
 
-  return [ops, setOp];
+  const getOpList = () => opLabels.map(([_, op]) => op).filter((op) => ops[op]);
+
+  return [getOpToggle, setOp, getOpList];
 };
 
 function App() {
   const [answer, setAnswer] = useState(42);
   const [depth, setDepth] = useState(3);
+  const [getOpToggle, setOpToggle, getOpList] = useOpToggles();
 
-  const [opToggles, setOpToggle] = useOpToggles();
-
-  const getOpList = () =>
-    opLabels.filter(({ op }) => opToggles[op]).map(({ op }) => op);
-
-  const [equation, setEquation] = useState(
-    getEquation(answer, depth, getOpList())
-  );
-  const newEquation = () => {
-    setEquation(getEquation(answer, depth, getOpList()));
+  const newEquation = () => getEquation(answer, depth, getOpList());
+  const [equation, setEquation] = useState(newEquation());
+  const rerollEquation = () => {
+    setEquation(newEquation());
   };
 
   return (
     <>
       <FormGroup>
-        {opLabels.map(({ label, op }) => (
+        {opLabels.map(([label, op]) => (
           <FormControlLabel
             key={label}
             control={
               <Checkbox
-                checked={opToggles[op]}
+                checked={getOpToggle(op)}
                 onChange={(e) => setOpToggle(op, e.target.checked)}
               />
             }
@@ -101,7 +96,7 @@ function App() {
         />
       </div>
       <div className="card">
-        <button onClick={newEquation}>New Equation</button>
+        <button onClick={rerollEquation}>New Equation</button>
       </div>
     </>
   );
