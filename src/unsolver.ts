@@ -7,6 +7,18 @@ const choose = (choices: any[]) => {
   return choices[index];
 };
 
+const getDivisors = (n: number) => {
+  let divisors = [];
+
+  for (let i = 2; i < n; i++) {
+    if (n % i == 0) {
+      divisors.push(i);
+    }
+  }
+
+  return divisors;
+};
+
 export enum MathOp {
   Const = "",
   Add = "+",
@@ -84,23 +96,31 @@ evals.set(MathOp.Sub, (node: MathNode, value: number) => {
 });
 
 evals.set(MathOp.Mul, (node: MathNode, value: number) => {
-  const left = value;
-  const right = 1;
+  const divisors = getDivisors(value);
 
-  evaluateNode(node.children[0], left);
-  evaluateNode(node.children[1], right);
+  console.log(value, divisors);
+
+  if (divisors.length > 1) {
+    const left = choose(divisors);
+    const right = value / left;
+
+    evaluateNode(node.children[0], left);
+    evaluateNode(node.children[1], right);
+  } else {
+    node.op = MathOp.Const;
+    node.value = value;
+  }
 });
 
 evals.set(MathOp.Div, (node: MathNode, value: number) => {
-  const left = value;
-  const right = 1;
+  const bottom = Math.ceil(Math.sqrt(value)) + 1;
+  const top = value * bottom;
 
-  evaluateNode(node.children[0], left);
-  evaluateNode(node.children[1], right);
+  evaluateNode(node.children[0], top);
+  evaluateNode(node.children[1], bottom);
 });
 
 evals.set(MathOp.Sin, (node: MathNode, value: number) => {
-  console.log(value);
   const inner = Math.asin(value);
   evaluateNode(node.children[0], inner);
 });
@@ -118,28 +138,64 @@ const evaluateNode = (node: MathNode, value: number) => {
   evals.get(node.op!)!(node, value);
 };
 
+// Higher number => lower precedence
+const precedence = (op: MathOp) => {
+  switch (op) {
+    case MathOp.Const:
+    case MathOp.Sin:
+    case MathOp.Cos:
+    case MathOp.Div:
+      return 0;
+    case MathOp.Mul:
+      return 1;
+    case MathOp.Add:
+    case MathOp.Sub:
+      return 2;
+    default:
+      return 3;
+  }
+};
+
 const formatNode = (node: MathNode, depth: number = 1): string => {
-  const formatChild = (index: number) =>
-    formatNode(node.children[index], depth + 1);
+  const formatChild = (index: number, prec: number = precedence(node.op)) => {
+    let formatted = formatNode(node.children[index], depth + 1);
+
+    if (precedence(node.children[index].op) > prec) {
+      return `(${formatted})`;
+    } else {
+      return formatted;
+    }
+  };
 
   switch (node.op) {
     case MathOp.Const:
       return `${node.value}`;
-    case MathOp.Add:
-    case MathOp.Sub:
-    case MathOp.Mul: {
+    case MathOp.Add: {
       const left = formatChild(0);
-      const right = formatChild(1);
-      return `(${left} ${node.op} ${right})`;
+      const right = formatChild(0);
+
+      return `${left} ${node.op} ${right}`;
+    }
+    case MathOp.Sub: {
+      const left = formatChild(0);
+      const right = formatChild(1, 0);
+
+      return `${left} ${node.op} ${right}`;
+    }
+    case MathOp.Mul: {
+      let left = formatChild(0);
+      let right = formatChild(1);
+
+      return `${left} ${node.op} ${right}`;
     }
     case MathOp.Sin:
     case MathOp.Cos: {
-      const inner = formatChild(0);
+      const inner = formatChild(0, 10000);
       return `\\${node.op}(${inner})`;
     }
     case MathOp.Div: {
-      const left = formatChild(0);
-      const right = formatChild(1);
+      const left = formatChild(0, 10000);
+      const right = formatChild(1, 10000);
       return `\\frac{${left}}{${right}}`;
     }
   }
