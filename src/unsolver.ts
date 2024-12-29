@@ -98,8 +98,6 @@ evals.set(MathOp.Sub, (node: MathNode, value: number) => {
 evals.set(MathOp.Mul, (node: MathNode, value: number) => {
   const divisors = getDivisors(value);
 
-  console.log(value, divisors);
-
   if (divisors.length > 1) {
     const left = choose(divisors);
     const right = value / left;
