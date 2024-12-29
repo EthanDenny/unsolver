@@ -170,7 +170,7 @@ const formatNode = (node: MathNode, depth: number = 1): string => {
       return `${node.value}`;
     case MathOp.Add: {
       const left = formatChild(0);
-      const right = formatChild(0);
+      const right = formatChild(1);
 
       return `${left} ${node.op} ${right}`;
     }
@@ -203,5 +203,6 @@ export const getEquation = (answer: number, depth: number, ops: MathOp[]) => {
   let root = newNode();
   expandNode(root, depth, ops);
   evaluateNode(root, answer);
+  console.log(root);
   return formatNode(root, depth);
 };
