@@ -40,12 +40,36 @@ const newNode = (depth: number = 1) => {
   return { children: [], depth, op: MathOp.Const };
 };
 
-const expandNode = (node: MathNode, max_depth: number, ops: MathOp[]) => {
+interface ExpandFlags {
+  allowStackedDivision: boolean;
+  divisionParent: boolean;
+}
+
+const expandNode = (
+  node: MathNode,
+  max_depth: number,
+  ops: MathOp[],
+  settings: ExpandFlags
+) => {
   if (node.depth == max_depth) {
     return;
   }
 
-  node.op = choose(ops);
+  let filtered_ops = ops.filter((op) => {
+    if (
+      op == MathOp.Div &&
+      settings.divisionParent &&
+      !settings.allowStackedDivision
+    ) {
+      return false;
+    }
+
+    return true;
+  });
+
+  node.op = choose(filtered_ops);
+
+  settings.divisionParent = node.op == MathOp.Div;
 
   let child_count = 0;
 
@@ -67,7 +91,7 @@ const expandNode = (node: MathNode, max_depth: number, ops: MathOp[]) => {
   for (let i = 0; i < child_count; i++) {
     node.children[i] = newNode(node.depth + 1);
     if (random(0, 1) == 1) {
-      expandNode(node.children[i], max_depth, ops);
+      expandNode(node.children[i], max_depth, ops, settings);
     }
   }
 };
@@ -199,9 +223,34 @@ const formatNode = (node: MathNode, depth: number = 1): string => {
   }
 };
 
-export const getEquation = (answer: number, depth: number, ops: MathOp[]) => {
+export const getEquation = (
+  answer: number,
+  depth: number,
+  toggles: Record<string, boolean>
+) => {
   let root = newNode();
-  expandNode(root, depth, ops);
+
+  let ops: MathOp[] = [];
+
+  if (toggles["allowAdd"]) {
+    ops.push(MathOp.Add);
+  }
+  if (toggles["allowSub"]) {
+    ops.push(MathOp.Sub);
+  }
+  if (toggles["allowMul"]) {
+    ops.push(MathOp.Mul);
+  }
+  if (toggles["allowDiv"]) {
+    ops.push(MathOp.Div);
+  }
+
+  const flags = {
+    allowStackedDivision: toggles["allowStackedDivision"],
+    divisionParent: false,
+  };
+
+  expandNode(root, depth, ops, flags);
   evaluateNode(root, answer);
   console.log(root);
   return formatNode(root, depth);

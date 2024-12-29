@@ -1,52 +1,46 @@
 import Latex from "react-latex-next";
 import { useState } from "react";
 import { FormGroup, FormControlLabel, Checkbox } from "@mui/material";
-import { getEquation, MathOp } from "./unsolver";
+import { getEquation } from "./unsolver";
 import "./App.css";
 import "../node_modules/katex/dist/katex.css";
 
-const opLabels: [string, MathOp][] = [
-  ["Addition", MathOp.Add],
-  ["Subtraction", MathOp.Sub],
-  ["Multiplication", MathOp.Mul],
-  ["Division", MathOp.Div],
+const toggleLabels: [string, string, boolean][] = [
+  ["Addition", "allowAdd", true],
+  ["Subtraction", "allowSub", true],
+  ["Multiplication", "allowMul", true],
+  ["Division", "allowDiv", true],
+  ["Allow stacked division", "allowStackedDivision", false],
 ];
 
-const useOpToggles = (): [
-  (op: MathOp) => boolean,
-  (op: MathOp, value: boolean) => void,
-  () => MathOp[]
+const useToggles = (): [
+  Record<string, boolean>,
+  (key: string, value: boolean) => void
 ] => {
-  const generateOpMap = () => {
+  const [toggles, setToggles] = useState(() => {
     let map: any = {};
-    opLabels.forEach(([_, op]) => {
-      map[op] = true;
+    toggleLabels.forEach(([_, toggle, defaultValue]) => {
+      map[toggle] = defaultValue;
     });
-    return map as Record<MathOp, boolean>;
-  };
+    return map as Record<string, boolean>;
+  });
 
-  const [ops, setOps] = useState(generateOpMap());
-
-  const getOpToggle = (op: MathOp) => ops[op];
-
-  const setOp = (op: MathOp, value: boolean) => {
-    setOps({
-      ...ops,
-      [op]: value,
+  const setToggle = (key: string, value: boolean) => {
+    setToggles({
+      ...toggles,
+      [key]: value,
     });
   };
 
-  const getOpList = () => opLabels.map(([_, op]) => op).filter((op) => ops[op]);
-
-  return [getOpToggle, setOp, getOpList];
+  return [toggles, setToggle];
 };
 
 function App() {
-  const [answer, setAnswer] = useState(42);
+  const [answer, setAnswer] = useState(100 + Math.floor(Math.random() * 900));
   const [depth, setDepth] = useState(3);
-  const [getOpToggle, setOpToggle, getOpList] = useOpToggles();
+  const [toggles, setToggle] = useToggles();
 
-  const newEquation = () => getEquation(answer, depth, getOpList());
+  const newEquation = () => getEquation(answer, depth, toggles);
   const [equation, setEquation] = useState(newEquation());
   const rerollEquation = () => {
     setEquation(newEquation());
@@ -55,13 +49,13 @@ function App() {
   return (
     <>
       <FormGroup>
-        {opLabels.map(([label, op]) => (
+        {toggleLabels.map(([label, key, _]) => (
           <FormControlLabel
             key={label}
             control={
               <Checkbox
-                checked={getOpToggle(op)}
-                onChange={(e) => setOpToggle(op, e.target.checked)}
+                checked={toggles[key]}
+                onChange={(e) => setToggle(key, e.target.checked)}
               />
             }
             label={label}
@@ -78,7 +72,7 @@ function App() {
           value={answer}
           onChange={(e) => {
             setAnswer(parseInt(e.target.value));
-            newEquation();
+            rerollEquation();
           }}
         />
       </div>
@@ -91,7 +85,7 @@ function App() {
           value={depth}
           onChange={(e) => {
             setDepth(parseInt(e.target.value));
-            newEquation();
+            rerollEquation();
           }}
         />
       </div>
