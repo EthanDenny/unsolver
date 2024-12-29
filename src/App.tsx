@@ -1,7 +1,6 @@
 import Latex from "react-latex-next";
 import { useState } from "react";
 import { FormGroup, FormControlLabel, Checkbox } from "@mui/material";
-import React from "react";
 import { getEquation, MathOp } from "./unsolver";
 import "./App.css";
 import "../node_modules/katex/dist/katex.css";
@@ -18,32 +17,44 @@ const opLabels: OpLabel[] = [
   { label: "Division", op: MathOp.Div },
 ];
 
-const generateOpMap = () => {
-  let map = new Map<MathOp, boolean>();
-  opLabels.forEach(({ op }) => map.set(op, true));
-  return map;
+const useOpToggles = (): [
+  Record<MathOp, boolean>,
+  (op: MathOp, value: boolean) => void
+] => {
+  const generateOpMap = () => {
+    let map: any = {};
+    opLabels.forEach(({ op }) => {
+      map[op] = true;
+    });
+    return map as Record<MathOp, boolean>;
+  };
+
+  const [ops, setOps] = useState(generateOpMap());
+
+  const setOp = (op: MathOp, value: boolean) => {
+    setOps({
+      ...ops,
+      [op]: value,
+    });
+  };
+
+  return [ops, setOp];
 };
 
 function App() {
   const [answer, setAnswer] = useState(42);
   const [depth, setDepth] = useState(3);
-  const [ops, setOps] = React.useState(generateOpMap());
+
+  const [opToggles, setOpToggle] = useOpToggles();
 
   const getOpList = () =>
-    opLabels.filter(({ op }) => ops.get(op)).map(({ op }) => op);
+    opLabels.filter(({ op }) => opToggles[op]).map(({ op }) => op);
 
   const [equation, setEquation] = useState(
     getEquation(answer, depth, getOpList())
   );
-
   const newEquation = () => {
     setEquation(getEquation(answer, depth, getOpList()));
-  };
-
-  const setOp = (op: MathOp, value: boolean) => {
-    let mutOps = ops;
-    mutOps.set(op, value);
-    setOps(mutOps);
   };
 
   return (
@@ -54,8 +65,8 @@ function App() {
             key={label}
             control={
               <Checkbox
-                value={ops.get(op) ? "on" : "off"}
-                onChange={(e) => setOp(op, e.target.checked)}
+                checked={opToggles[op]}
+                onChange={(e) => setOpToggle(op, e.target.checked)}
               />
             }
             label={label}
