@@ -68,7 +68,7 @@ impl MathNode {
     }
 }
 
-fn expand_node(node: &mut MathNode, max_depth: i32, ops: &Vec<MathOp>, mut settings: EngineFlags) {
+fn expand_node(node: &mut MathNode, max_depth: i32, ops: &[MathOp], mut settings: EngineFlags) {
     if node.depth == max_depth {
         return;
     }
