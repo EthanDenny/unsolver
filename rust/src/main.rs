@@ -79,14 +79,13 @@ fn expand_node(node: &mut MathNode, max_depth: i32, ops: &Vec<MathOp>, mut setti
 
     let filtered_ops: Vec<MathOp> = ops
         .iter()
-        .filter(|op| {
-            if **op == MathOp::Div && settings.division_parent && !settings.allow_stacked_division {
-                return false;
+        .filter_map(|&op| {
+            if op == MathOp::Div && settings.division_parent && !settings.allow_stacked_division {
+                return None;
             }
 
-            true
+            Some(op)
         })
-        .map(|&op| op)
         .collect();
 
     node.op = *choose(&filtered_ops);
