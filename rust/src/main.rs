@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::fmt::{Display, Error};
 
 #[derive(Clone, Copy)]
 struct EngineFlags {
@@ -28,17 +28,14 @@ enum MathOp {
 
 impl Display for MathOp {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if let MathOp::Const(Some(value)) = self {
-            f.write_str(value.to_string().as_str())
-        } else {
-            f.write_str(match self {
-                MathOp::Add => "+",
-                MathOp::Sub => "-",
-                MathOp::Mul => "\\times",
-                MathOp::Sin => "sin",
-                MathOp::Cos => "cos",
-                _ => panic!("{} should not be represented as a string", self),
-            })
+        match self {
+            MathOp::Const(Some(value)) => f.write_str(value.to_string().as_str()),
+            MathOp::Add => f.write_str("+"),
+            MathOp::Sub => f.write_str("-"),
+            MathOp::Mul => f.write_str("\\times"),
+            MathOp::Sin => f.write_str("sin"),
+            MathOp::Cos => f.write_str("cos"),
+            _ => Err(Error),
         }
     }
 }
@@ -111,15 +108,15 @@ fn expand_node(node: &mut MathNode, max_depth: i32, ops: &Vec<MathOp>, mut setti
     }
 }
 
-fn evaluate_node(node: &mut MathNode, value: i32) {
+fn evaluate_node(node: &mut MathNode, value: i32) -> Result<(), String> {
     match node.op {
         MathOp::Add => {
             if value > 1 {
                 let left = 1 + rand::random::<i32>().abs() % (value - 1);
                 let right = value - left;
 
-                evaluate_node(&mut node.children[0], left);
-                evaluate_node(&mut node.children[1], right);
+                evaluate_node(&mut node.children[0], left)?;
+                evaluate_node(&mut node.children[1], right)?;
             } else {
                 node.op = MathOp::Const(Some(1));
             }
@@ -128,8 +125,8 @@ fn evaluate_node(node: &mut MathNode, value: i32) {
             let left = value + 1 + rand::random::<i32>().abs() % value;
             let right = left - value;
 
-            evaluate_node(&mut node.children[0], left);
-            evaluate_node(&mut node.children[1], right);
+            evaluate_node(&mut node.children[0], left)?;
+            evaluate_node(&mut node.children[1], right)?;
         }
         MathOp::Mul => {
             let divisors: Vec<i32> = (2..value).filter(|i| value % i == 0).collect();
@@ -138,8 +135,8 @@ fn evaluate_node(node: &mut MathNode, value: i32) {
                 let left = *choose(&divisors);
                 let right = value / left;
 
-                evaluate_node(&mut node.children[0], left);
-                evaluate_node(&mut node.children[1], right);
+                evaluate_node(&mut node.children[0], left)?;
+                evaluate_node(&mut node.children[1], right)?;
             } else {
                 node.op = MathOp::Const(Some(value));
             }
@@ -148,69 +145,71 @@ fn evaluate_node(node: &mut MathNode, value: i32) {
             let bottom = ((value as f64).sqrt().ceil() as i32) + 1;
             let top = value * bottom;
 
-            evaluate_node(&mut node.children[0], top);
-            evaluate_node(&mut node.children[1], bottom);
+            evaluate_node(&mut node.children[0], top)?;
+            evaluate_node(&mut node.children[1], bottom)?;
         }
         MathOp::Sin => {
             let inner = 0;
-            evaluate_node(&mut node.children[0], inner);
+            evaluate_node(&mut node.children[0], inner)?;
         }
         MathOp::Cos => {
             let inner = 0;
-            evaluate_node(&mut node.children[0], inner);
+            evaluate_node(&mut node.children[0], inner)?;
         }
         MathOp::Const(None) => {
             node.op = MathOp::Const(Some(value));
         }
         MathOp::Const(Some(_)) => {
-            panic!("Constant nodes with vaules should not be evaluated")
+            return Err("Constant nodes with vaules should not be evaluated".to_string());
         }
     }
+
+    Ok(())
 }
 
-fn format_node(node: &MathNode) -> String {
+fn format_node(node: &MathNode) -> Result<String, String> {
     let this_prec = precedence(&node.op);
 
-    let format_child = |index: usize, prec: i32| {
-        let formatted = format_node(&node.children[index]);
+    let format_child = |index: usize, prec: i32| -> Result<String, String> {
+        let formatted = format_node(&node.children[index])?;
 
         if precedence(&node.children[index].op) > prec {
-            format!("({})", formatted)
+            Ok(format!("({})", formatted))
         } else {
-            formatted
+            Ok(formatted)
         }
     };
 
     match node.op {
-        MathOp::Const(None) => panic!("Cannot format empy constant"),
-        MathOp::Const(Some(value)) => value.to_string(),
+        MathOp::Const(Some(value)) => Ok(value.to_string()),
         MathOp::Add | MathOp::Mul => {
-            let left = format_child(0, this_prec);
-            let right = format_child(1, this_prec);
+            let left = format_child(0, this_prec)?;
+            let right = format_child(1, this_prec)?;
 
-            format!("{} {} {}", left, node.op, right)
+            Ok(format!("{} {} {}", left, node.op, right))
         }
         MathOp::Sub => {
-            let left = format_child(0, this_prec);
-            let right = format_child(1, 0);
+            let left = format_child(0, this_prec)?;
+            let right = format_child(1, 0)?;
 
-            format!("{} {} {}", left, node.op, right)
+            Ok(format!("{} {} {}", left, node.op, right))
         }
         MathOp::Sin | MathOp::Cos => {
-            let inner = format_child(0, 10000);
+            let inner = format_child(0, 10000)?;
 
-            format!("\\{}({})", node.op, inner)
+            Ok(format!("\\{}({})", node.op, inner))
         }
         MathOp::Div => {
-            let left = format_child(0, 10000);
-            let right = format_child(1, 10000);
+            let left = format_child(0, 10000)?;
+            let right = format_child(1, 10000)?;
 
-            format!("\\frac{{{}}}{{{}}}", left, right)
+            Ok(format!("\\frac{{{}}}{{{}}}", left, right))
         }
+        MathOp::Const(None) => Err("Cannot format empy constant".to_string()),
     }
 }
 
-fn get_equation(answer: i32, depth: i32, toggles: Vec<&str>) -> String {
+fn get_equation(answer: i32, depth: i32, toggles: Vec<&str>) -> Result<String, String> {
     let mut ops = Vec::new();
     let mut flags = EngineFlags::new();
 
@@ -230,8 +229,8 @@ fn get_equation(answer: i32, depth: i32, toggles: Vec<&str>) -> String {
     let mut root = MathNode::new(1);
 
     expand_node(&mut root, depth, &ops, flags);
-    evaluate_node(&mut root, answer);
-    return format_node(&root);
+    evaluate_node(&mut root, answer)?;
+    format_node(&root)
 }
 
 fn main() {
@@ -242,9 +241,12 @@ fn main() {
     let answer = get_arg(0, 42);
     let depth = get_arg(1, 3);
 
-    let toggles: Vec<&str> = vec!["allowAdd", "allowSin"];
+    let toggles: Vec<&str> = vec!["allowAdd", "allowSub", "allowMul", "allowDiv"];
 
-    let tex = get_equation(answer, depth, toggles);
+    let equation = get_equation(answer, depth, toggles);
 
-    println!("{}", tex);
+    match equation {
+        Ok(tex) => println!("{}", tex),
+        Err(msg) => println!("{}", msg),
+    }
 }
