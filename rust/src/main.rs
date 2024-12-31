@@ -26,6 +26,17 @@ enum MathOp {
     Cos,
 }
 
+impl MathOp {
+    // Higher value => lower precedence
+    fn precedence(&self) -> i32 {
+        match self {
+            MathOp::Const(_) | MathOp::Sin | MathOp::Cos | MathOp::Div => 0,
+            MathOp::Mul => 1,
+            MathOp::Add | MathOp::Sub => 2,
+        }
+    }
+}
+
 impl Display for MathOp {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -53,15 +64,6 @@ impl MathNode {
             children: Vec::new(),
             depth,
         }
-    }
-}
-
-// Higher value => lower precedence
-fn precedence(op: &MathOp) -> i32 {
-    match op {
-        MathOp::Const(_) | MathOp::Sin | MathOp::Cos | MathOp::Div => 0,
-        MathOp::Mul => 1,
-        MathOp::Add | MathOp::Sub => 2,
     }
 }
 
@@ -168,12 +170,12 @@ fn evaluate_node(node: &mut MathNode, value: i32) -> Result<(), String> {
 }
 
 fn format_node(node: &MathNode) -> Result<String, String> {
-    let this_prec = precedence(&node.op);
+    let this_prec = node.op.precedence();
 
     let format_child = |index: usize, prec: i32| -> Result<String, String> {
         let formatted = format_node(&node.children[index])?;
 
-        if precedence(&node.children[index].op) > prec {
+        if node.children[index].op.precedence() > prec {
             Ok(format!("({})", formatted))
         } else {
             Ok(formatted)
