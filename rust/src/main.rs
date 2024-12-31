@@ -1,3 +1,4 @@
+use rand::seq::SliceRandom;
 use std::fmt::{Display, Error};
 
 #[derive(Clone, Copy)]
@@ -67,11 +68,6 @@ impl MathNode {
     }
 }
 
-fn choose<'a, T>(choices: &'a Vec<T>) -> &'a T {
-    let index = rand::random::<usize>() % choices.len();
-    &choices[index]
-}
-
 fn expand_node(node: &mut MathNode, max_depth: i32, ops: &Vec<MathOp>, mut settings: EngineFlags) {
     if node.depth == max_depth {
         return;
@@ -88,7 +84,9 @@ fn expand_node(node: &mut MathNode, max_depth: i32, ops: &Vec<MathOp>, mut setti
         })
         .collect();
 
-    node.op = *choose(&filtered_ops);
+    node.op = *filtered_ops
+        .choose(&mut rand::thread_rng())
+        .unwrap_or(&MathOp::Const(None));
 
     settings.division_parent = node.op == MathOp::Div;
 
@@ -130,10 +128,9 @@ fn evaluate_node(node: &mut MathNode, value: i32) -> Result<(), String> {
             evaluate_node(&mut node.children[1], right)?;
         }
         MathOp::Mul => {
-            let divisors: Vec<i32> = (2..value).filter(|i| value % i == 0).collect();
+            let divisors = (2..value).filter(|i| value % i == 0).collect::<Vec<i32>>();
 
-            if divisors.len() > 1 {
-                let left = *choose(&divisors);
+            if let Some(&left) = divisors.choose(&mut rand::thread_rng()) {
                 let right = value / left;
 
                 evaluate_node(&mut node.children[0], left)?;
