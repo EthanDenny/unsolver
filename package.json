@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "build:wasm": "cd unsolver-lib && wasm-pack build --target web --out-dir pkg",
+    "predeploy" : "npm run build:wasm && npm run build",
+    "deploy" : "gh-pages -d build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
