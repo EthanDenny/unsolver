@@ -24,15 +24,13 @@ enum MathOp {
     Sub,
     Mul,
     Div,
-    Sin,
-    Cos,
 }
 
 impl MathOp {
     // Higher value => lower precedence
     fn precedence(&self) -> i32 {
         match self {
-            MathOp::Const(_) | MathOp::Sin | MathOp::Cos | MathOp::Div => 0,
+            MathOp::Const(_) | MathOp::Div => 0,
             MathOp::Mul => 1,
             MathOp::Add | MathOp::Sub => 2,
         }
@@ -46,8 +44,6 @@ impl Display for MathOp {
             MathOp::Add => f.write_str("+"),
             MathOp::Sub => f.write_str("-"),
             MathOp::Mul => f.write_str("\\times"),
-            MathOp::Sin => f.write_str("sin"),
-            MathOp::Cos => f.write_str("cos"),
             _ => Err(Error),
         }
     }
@@ -92,7 +88,6 @@ fn expand_node(node: &mut MathNode, max_depth: i32, ops: &[MathOp], mut settings
     settings.division_parent = node.op == MathOp::Div;
 
     let child_count = match node.op {
-        MathOp::Sin | MathOp::Cos => 1,
         MathOp::Add | MathOp::Sub | MathOp::Mul | MathOp::Div => 2,
         _ => 0,
     };
@@ -147,14 +142,6 @@ fn evaluate_node(node: &mut MathNode, value: i32) -> Result<(), String> {
             evaluate_node(&mut node.children[0], top)?;
             evaluate_node(&mut node.children[1], bottom)?;
         }
-        MathOp::Sin => {
-            let inner = 0;
-            evaluate_node(&mut node.children[0], inner)?;
-        }
-        MathOp::Cos => {
-            let inner = 0;
-            evaluate_node(&mut node.children[0], inner)?;
-        }
         MathOp::Const(None) => {
             node.op = MathOp::Const(Some(value));
         }
@@ -193,11 +180,6 @@ fn format_node(node: &MathNode) -> Result<String, String> {
 
             Ok(format!("{} {} {}", left, node.op, right))
         }
-        MathOp::Sin | MathOp::Cos => {
-            let inner = format_child(0, 10000)?;
-
-            Ok(format!("\\{}({})", node.op, inner))
-        }
         MathOp::Div => {
             let left = format_child(0, 10000)?;
             let right = format_child(1, 10000)?;
@@ -219,8 +201,6 @@ pub fn get_equation(answer: i32, depth: i32, toggles: Vec<String>) -> String {
             "allowSub" => ops.push(MathOp::Sub),
             "allowMul" => ops.push(MathOp::Mul),
             "allowDiv" => ops.push(MathOp::Div),
-            "allowSin" => ops.push(MathOp::Sin),
-            "allowCos" => ops.push(MathOp::Cos),
             "allowStackedDiv" => flags.allow_stacked_division = true,
             _ => println!("Unknown toggle '{}'", toggle),
         }
