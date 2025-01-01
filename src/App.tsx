@@ -1,7 +1,7 @@
 import Latex from "react-latex-next";
 import { useState } from "react";
 import { FormGroup, FormControlLabel, Checkbox } from "@mui/material";
-import { getEquation } from "./unsolver";
+import { useEquation, useToggles } from "./hooks";
 import "./App.css";
 import "../node_modules/katex/dist/katex.css";
 
@@ -10,41 +10,16 @@ const toggleLabels: [string, string, boolean][] = [
   ["Subtraction", "allowSub", true],
   ["Multiplication", "allowMul", true],
   ["Division", "allowDiv", true],
-  ["Allow stacked division", "allowStackedDivision", false],
+  ["Allow stacked division", "allowStackedDiv", false],
 ];
-
-const useToggles = (): [
-  Record<string, boolean>,
-  (key: string, value: boolean) => void
-] => {
-  const [toggles, setToggles] = useState(() => {
-    let map: any = {};
-    toggleLabels.forEach(([_, toggle, defaultValue]) => {
-      map[toggle] = defaultValue;
-    });
-    return map as Record<string, boolean>;
-  });
-
-  const setToggle = (key: string, value: boolean) => {
-    setToggles({
-      ...toggles,
-      [key]: value,
-    });
-  };
-
-  return [toggles, setToggle];
-};
 
 function App() {
   const [answer, setAnswer] = useState(100 + Math.floor(Math.random() * 900));
   const [depth, setDepth] = useState(3);
-  const [toggles, setToggle] = useToggles();
-
-  const newEquation = () => getEquation(answer, depth, toggles);
-  const [equation, setEquation] = useState(newEquation());
-  const rerollEquation = () => {
-    setEquation(newEquation());
-  };
+  const [activeToggles, togglesMap, setToggle] = useToggles(
+    toggleLabels.map(([_, key, defaultValue]) => [key, defaultValue])
+  );
+  const [equation, rerollEquation] = useEquation(answer, depth, activeToggles);
 
   return (
     <>
@@ -54,7 +29,7 @@ function App() {
             key={label}
             control={
               <Checkbox
-                checked={toggles[key]}
+                checked={togglesMap[key]}
                 onChange={(e) => setToggle(key, e.target.checked)}
               />
             }

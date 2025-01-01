@@ -1,5 +1,6 @@
 use rand::seq::SliceRandom;
 use std::fmt::{Display, Error};
+use wasm_bindgen::prelude::*;
 
 #[derive(Clone, Copy)]
 struct EngineFlags {
@@ -207,12 +208,13 @@ fn format_node(node: &MathNode) -> Result<String, String> {
     }
 }
 
-fn get_equation(answer: i32, depth: i32, toggles: Vec<&str>) -> Result<String, String> {
+#[wasm_bindgen]
+pub fn get_equation(answer: i32, depth: i32, toggles: Vec<String>) -> String {
     let mut ops = Vec::new();
     let mut flags = EngineFlags::new();
 
     for toggle in toggles {
-        match toggle {
+        match toggle.as_str() {
             "allowAdd" => ops.push(MathOp::Add),
             "allowSub" => ops.push(MathOp::Sub),
             "allowMul" => ops.push(MathOp::Mul),
@@ -220,31 +222,20 @@ fn get_equation(answer: i32, depth: i32, toggles: Vec<&str>) -> Result<String, S
             "allowSin" => ops.push(MathOp::Sin),
             "allowCos" => ops.push(MathOp::Cos),
             "allowStackedDiv" => flags.allow_stacked_division = true,
-            _ => println!("Unknown toggle "),
+            _ => println!("Unknown toggle '{}'", toggle),
         }
     }
 
     let mut root = MathNode::new(1);
 
     expand_node(&mut root, depth, &ops, flags);
-    evaluate_node(&mut root, answer)?;
-    format_node(&root)
-}
 
-fn main() {
-    let args: Vec<Option<i32>> = std::env::args().map(|s| s.parse::<i32>().ok()).collect();
-    let get_arg =
-        |index: usize, default| args.get(index).unwrap_or(&Some(default)).unwrap_or(default);
+    if let Err(msg) = evaluate_node(&mut root, answer) {
+        return msg;
+    }
 
-    let answer = get_arg(0, 42);
-    let depth = get_arg(1, 3);
-
-    let toggles: Vec<&str> = vec!["allowAdd", "allowSub", "allowMul", "allowDiv"];
-
-    let equation = get_equation(answer, depth, toggles);
-
-    match equation {
-        Ok(tex) => println!("{}", tex),
-        Err(msg) => println!("{}", msg),
+    match format_node(&root) {
+        Ok(tex) => tex,
+        Err(msg) => msg,
     }
 }

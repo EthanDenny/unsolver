@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:wasm": "cd unsolver-lib && wasm-pack build --target web --out-dir pkg",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -17,7 +18,8 @@
     "react-dom": "^19.0.0",
     "react-latex-next": "^3.0.0",
     "react-redux": "^9.2.0",
-    "styled-components": "^6.1.13"
+    "styled-components": "^6.1.13",
+    "unsolver-lib": "file:unsolver-lib/pkg"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
