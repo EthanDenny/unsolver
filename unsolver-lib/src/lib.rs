@@ -3,6 +3,7 @@ use wasm_bindgen::prelude::*;
 
 #[derive(Clone, Copy)]
 struct EngineFlags {
+    allow_powers_of_2: bool,
     allow_stacked_division: bool,
     division_parent: bool,
 }
@@ -10,6 +11,7 @@ struct EngineFlags {
 impl EngineFlags {
     fn new() -> EngineFlags {
         EngineFlags {
+            allow_powers_of_2: false,
             allow_stacked_division: false,
             division_parent: false,
         }
@@ -24,15 +26,18 @@ enum MathOp {
     Sub,
     Mul,
     Div,
+    Pow2,
 }
 
 impl MathOp {
     // Higher value => lower precedence
     fn precedence(&self) -> i32 {
         match self {
-            MathOp::Const | MathOp::Div => 0,
-            MathOp::Mul => 1,
-            MathOp::Add | MathOp::Sub => 2,
+            MathOp::Const => 0,
+            MathOp::Pow2 => 1,
+            MathOp::Div => 2,
+            MathOp::Mul => 3,
+            MathOp::Add | MathOp::Sub => 4,
             MathOp::Null => panic!("{self:?} has no precedence"),
         }
     }
@@ -66,12 +71,16 @@ impl MathNode {
     }
 }
 
+fn is_perfect_square(n: i32) -> bool {
+    (n as f64).sqrt().fract() <= f64::EPSILON
+}
+
 fn expand_node(node: &mut MathNode, max_depth: i32, ops: &[MathOp], mut settings: EngineFlags) {
     if node.depth == max_depth {
         return;
     }
 
-    let filtered_ops: Vec<MathOp> = ops
+    let mut filtered_ops: Vec<MathOp> = ops
         .iter()
         .filter_map(|&op| {
             if op == MathOp::Div && settings.division_parent && !settings.allow_stacked_division {
@@ -81,6 +90,10 @@ fn expand_node(node: &mut MathNode, max_depth: i32, ops: &[MathOp], mut settings
             Some(op)
         })
         .collect();
+
+    if settings.allow_powers_of_2 && is_perfect_square(node.value) {
+        filtered_ops.push(MathOp::Pow2)
+    }
 
     if filtered_ops.len() > 0 {
         node.op = *filtered_ops.choose(&mut rand::thread_rng()).unwrap();
@@ -139,6 +152,9 @@ fn expand_node(node: &mut MathNode, max_depth: i32, ops: &[MathOp], mut settings
                 node.op = MathOp::Const;
             }
         }
+        MathOp::Pow2 => {
+            create_child((node.value as f64).sqrt() as i32);
+        }
         MathOp::Div => {
             let bottom = ((node.value as f64).sqrt().ceil() as i32) + 1;
             let top = node.value * bottom;
@@ -183,6 +199,10 @@ fn format_node(node: &MathNode) -> Result<String, String> {
 
             Ok(format!("\\frac{{{}}}{{{}}}", left, right))
         }
+        MathOp::Pow2 => {
+            let inner = format_child(0, this_prec)?;
+            Ok(format!("{{{}}}^2", inner))
+        }
         _ => Ok(format!("{:?}", node.op)),
     }
 }
@@ -198,6 +218,7 @@ pub fn get_equation(answer: i32, depth: i32, toggles: Vec<String>) -> String {
             "allowSub" => ops.push(MathOp::Sub),
             "allowMul" => ops.push(MathOp::Mul),
             "allowDiv" => ops.push(MathOp::Div),
+            "allowPow2" => flags.allow_powers_of_2 = true,
             "allowStackedDiv" => flags.allow_stacked_division = true,
             _ => println!("Unknown toggle '{}'", toggle),
         }
@@ -221,7 +242,7 @@ mod tests {
     fn test_get_equation() {
         let answer = 42;
         let depth = 3;
-        let toggles = vec!["allowAdd", "allowSub", "allowMul", "allowDiv"];
+        let toggles = vec!["allowAdd", "allowSub", "allowMul", "allowDiv", "allowPow2"];
 
         println!(
             "{}",

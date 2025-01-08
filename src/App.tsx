@@ -10,6 +10,7 @@ const toggleLabels: [string, string, boolean][] = [
   ["Subtraction", "allowSub", true],
   ["Multiplication", "allowMul", true],
   ["Division", "allowDiv", true],
+  ["Powers of 2", "allowPow2", true],
   ["Allow stacked division", "allowStackedDiv", false],
 ];
 
