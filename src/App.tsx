@@ -1,6 +1,5 @@
 import Latex from "react-latex-next";
 import { useState } from "react";
-import { FormGroup, FormControlLabel, Checkbox } from "@mui/material";
 import { useEquation, useToggles } from "./hooks";
 import "./App.css";
 import "../node_modules/katex/dist/katex.css";
@@ -23,25 +22,25 @@ function App() {
   const [equation, rerollEquation] = useEquation(answer, depth, activeToggles);
 
   return (
-    <>
-      <FormGroup>
+    <div className="flex flex-col items-center gap-8">
+      <div className="flex flex-col gap-4">
         {toggleLabels.map(([label, key, _]) => (
-          <FormControlLabel
-            key={label}
-            control={
-              <Checkbox
-                checked={togglesMap[key]}
-                onChange={(e) => setToggle(key, e.target.checked)}
-              />
-            }
-            label={label}
-          />
+          <div className="flex gap-2">
+            <input
+              type="checkbox"
+              key={label}
+              id={label}
+              checked={togglesMap[key]}
+              onChange={(e) => setToggle(key, e.target.checked)}
+            />
+            <label htmlFor={label}>{label}</label>
+          </div>
         ))}
-      </FormGroup>
-      <h1>
+      </div>
+      <h1 className="text-5xl h-[82px]">
         <Latex>{"$" + equation + "$"}</Latex>
       </h1>
-      <div className="card">
+      <div className="flex gap-4">
         Answer:{" "}
         <input
           type="number"
@@ -52,7 +51,7 @@ function App() {
           }}
         />
       </div>
-      <div className="card">
+      <div className="flex gap-4">
         Max Depth: {depth}
         <input
           type="range"
@@ -65,10 +64,10 @@ function App() {
           }}
         />
       </div>
-      <div className="card">
+      <div className="flex gap-4">
         <button onClick={rerollEquation}>New Equation</button>
       </div>
-    </>
+    </div>
   );
 }
 
