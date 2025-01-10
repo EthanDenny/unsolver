@@ -19,7 +19,7 @@
     "react-latex-next": "^3.0.0",
     "react-redux": "^9.2.0",
     "styled-components": "^6.1.13",
-    "unsolver-rs": "^0.1.0"
+    "unsolver-rs": "^0.1.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
@@ -36,8 +36,6 @@
     "tailwindcss": "^3.4.17",
     "typescript": "~5.6.2",
     "typescript-eslint": "^8.18.2",
-    "vite": "^6.0.5",
-    "vite-plugin-top-level-await": "^1.4.4",
-    "vite-plugin-wasm": "^3.4.1"
+    "vite": "^6.0.5"
   }
 }
