@@ -4,13 +4,16 @@ import { useEquation, useToggles } from "./hooks";
 import "./App.css";
 import "../node_modules/katex/dist/katex.css";
 
-const toggleLabels: [string, string, boolean][] = [
+// Label, toggle, default value, enabled if
+const toggleLabels: [string, string, boolean, string?][] = [
   ["Addition", "allowAdd", true],
   ["Subtraction", "allowSub", true],
   ["Multiplication", "allowMul", true],
   ["Division", "allowDiv", true],
+  ["Square roots", "allowSquareRoots", true],
   ["Powers of 2", "allowPow2", true],
-  ["Allow stacked division", "allowStackedDiv", false],
+  ["Allow stacked division", "allowStackedDiv", false, "allowDiv"],
+  ["Allow powers in roots", "allowPowersInRoots", false, "allowPow2"],
 ];
 
 function App() {
@@ -24,9 +27,10 @@ function App() {
   return (
     <div className="flex flex-col items-center gap-8">
       <div className="flex flex-col gap-4">
-        {toggleLabels.map(([label, key, _]) => (
+        {toggleLabels.map(([label, key, _, enabledIf]) => (
           <div className="flex gap-2">
             <input
+              disabled={enabledIf ? !togglesMap[enabledIf] : false}
               type="checkbox"
               key={label}
               id={label}

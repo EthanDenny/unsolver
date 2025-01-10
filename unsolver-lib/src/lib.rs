@@ -4,16 +4,20 @@ use wasm_bindgen::prelude::*;
 #[derive(Clone, Copy)]
 struct EngineFlags {
     allow_powers_of_2: bool,
+    allow_powers_in_roots: bool,
     allow_stacked_division: bool,
     division_parent: bool,
+    sqrt_parent: bool,
 }
 
 impl EngineFlags {
     fn new() -> EngineFlags {
         EngineFlags {
             allow_powers_of_2: false,
+            allow_powers_in_roots: false,
             allow_stacked_division: false,
             division_parent: false,
+            sqrt_parent: false,
         }
     }
 }
@@ -27,6 +31,7 @@ enum MathOp {
     Mul,
     Div,
     Pow2,
+    Sqrt,
 }
 
 impl MathOp {
@@ -34,7 +39,7 @@ impl MathOp {
     fn precedence(&self) -> i32 {
         match self {
             MathOp::Const => 0,
-            MathOp::Pow2 => 1,
+            MathOp::Pow2 | MathOp::Sqrt => 1,
             MathOp::Div => 2,
             MathOp::Mul => 3,
             MathOp::Add | MathOp::Sub => 4,
@@ -87,6 +92,14 @@ fn expand_node(node: &mut MathNode, max_depth: i32, ops: &[MathOp], mut settings
                 return None;
             }
 
+            if op == MathOp::Sqrt && settings.sqrt_parent {
+                return None;
+            }
+
+            if op == MathOp::Pow2 && settings.sqrt_parent && !settings.allow_powers_in_roots {
+                return None;
+            }
+
             Some(op)
         })
         .collect();
@@ -103,6 +116,7 @@ fn expand_node(node: &mut MathNode, max_depth: i32, ops: &[MathOp], mut settings
     }
 
     settings.division_parent = node.op == MathOp::Div;
+    settings.sqrt_parent = node.op == MathOp::Sqrt;
 
     let mut create_child = |value: i32| {
         let mut child = MathNode::new(MathOp::Null, value, node.depth + 1);
@@ -155,6 +169,9 @@ fn expand_node(node: &mut MathNode, max_depth: i32, ops: &[MathOp], mut settings
         MathOp::Pow2 => {
             create_child((node.value as f64).sqrt() as i32);
         }
+        MathOp::Sqrt => {
+            create_child(node.value * node.value);
+        }
         MathOp::Div => {
             let bottom = ((node.value as f64).sqrt().ceil() as i32) + 1;
             let top = node.value * bottom;
@@ -197,11 +214,15 @@ fn format_node(node: &MathNode) -> Result<String, String> {
             let left = format_child(0, 10000)?;
             let right = format_child(1, 10000)?;
 
-            Ok(format!("\\frac{{{}}}{{{}}}", left, right))
+            Ok(format!("\\frac{{{left}}}{{{right}}}"))
         }
         MathOp::Pow2 => {
             let inner = format_child(0, this_prec)?;
-            Ok(format!("{{{}}}^2", inner))
+            Ok(format!("{{{inner}}}^2"))
+        }
+        MathOp::Sqrt => {
+            let inner = format_child(0, 10000)?;
+            Ok(format!("\\sqrt{{{inner}}}"))
         }
         _ => Ok(format!("{:?}", node.op)),
     }
@@ -219,6 +240,8 @@ pub fn get_equation(answer: i32, depth: i32, toggles: Vec<String>) -> String {
             "allowMul" => ops.push(MathOp::Mul),
             "allowDiv" => ops.push(MathOp::Div),
             "allowPow2" => flags.allow_powers_of_2 = true,
+            "allowPowersInRoots" => flags.allow_powers_in_roots = true,
+            "allowSquareRoots" => ops.push(MathOp::Sqrt),
             "allowStackedDiv" => flags.allow_stacked_division = true,
             _ => println!("Unknown toggle '{}'", toggle),
         }
