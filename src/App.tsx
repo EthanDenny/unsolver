@@ -28,11 +28,10 @@ function App() {
     <div className="flex flex-col items-center gap-8">
       <div className="flex flex-col gap-4">
         {toggleLabels.map(([label, key, _, enabledIf]) => (
-          <div className="flex gap-2">
+          <div key={label} className="flex gap-2">
             <input
               disabled={enabledIf ? !togglesMap[enabledIf] : false}
               type="checkbox"
-              key={label}
               id={label}
               checked={togglesMap[key]}
               onChange={(e) => setToggle(key, e.target.checked)}

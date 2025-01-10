@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import init, { get_equation } from "unsolver-lib";
+import init, { get_equation } from "unsolver-rs";
 
 export const useToggles = (
   toggleDefaults: [string, boolean][]
