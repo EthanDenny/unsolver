@@ -23,11 +23,6 @@ export const useToggles = (
   return [activeToggles, togglesMap, setToggle];
 };
 
-const wasmPath = new URL(
-  "../node_modules/unsolver-rs/unsolver_rs_bg.wasm",
-  import.meta.url
-);
-
 export const useEquation = (
   answer: number,
   depth: number,
@@ -37,7 +32,7 @@ export const useEquation = (
   const [equationId, setEquationId] = useState(0);
 
   useEffect(() => {
-    init({ module_or_path: wasmPath }).then(() => {
+    init().then(() => {
       setEquation(get_equation(answer, depth, toggles));
     });
   }, [equationId]);
